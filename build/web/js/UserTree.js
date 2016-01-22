@@ -7,7 +7,7 @@
 var setting = {
     edit: {
         enable: true,
-        showRemoveBtn: false,
+        showRemoveBtn: true,
         showRenameBtn: true
     },
     data: {
@@ -19,7 +19,9 @@ var setting = {
         beforeDrag: beforeDrag,
         beforeDrop: beforeDrop,
         onRightClick: OnRightClick,
-        onDrop: myOnDrop
+        onDrop: myOnDrop,
+        onRemove: onRemove,
+				onRename: onRename
     }
 };
 
@@ -84,8 +86,7 @@ function removeTreeNode() {
     if (nodes && nodes.length > 0) {
         if (nodes[0].children && nodes[0].children.length > 0) {
             var msg = "是否確認將連同的子節點一起删掉?";
-            if (confirm(msg) == true) {
-                console.log(JSON.stringify(nodes[0]));
+            if (confirm(msg) == true) {              
                 zTree.removeNode(nodes[0]);
             }
         } else {
@@ -108,6 +109,7 @@ $(document).ready(function () {
     $("#inner").bind("change", setCheck);
     $("#next").bind("change", setCheck);
     zTree = $.fn.zTree.getZTreeObj("treeDemo");
+     zTree2 = $.fn.zTree.getZTreeObj("treeDemo2");
     rMenu = $("#rMenu");
 });
 
@@ -143,8 +145,7 @@ function InitialData() {
         success: function (response) {
             $("#treedata").val(response);
             var ChartJSON = $.parseJSON($("#treedata").val());
-            if (ChartJSON != null) {
-                console.log(ChartJSON);
+            if (ChartJSON != null) {               
                 $.fn.zTree.init($("#treeDemo"), setting, ChartJSON);
             }
 
@@ -216,9 +217,9 @@ function fontCss(treeNode) {
 		}
 
 var curSrcNode, curType;
-		function setCurSrcNode(treeNode,tLevel) {
+		function setCurSrcNode(treeNode) {
 			var zTree = $.fn.zTree.getZTreeObj("treeDemo");
-                        var zTree2 = $.fn.zTree.getZTreeObj("treeDemo2");
+                       
 			if (curSrcNode) {
 				delete curSrcNode.isCur;
 				var tmpNode = curSrcNode;
@@ -230,39 +231,30 @@ var curSrcNode, curType;
 
 			curSrcNode.isCur = true;
                         
-                        if(tLevel==2){
-                            zTree2.cancelSelectedNode();
-                            
-                        }else{
-			zTree.cancelSelectedNode();}
+                  
+			zTree.cancelSelectedNode();
+                      
 			fontCss(curSrcNode);
+                        hideRMenu();
 		}
+                
 function copy(e) {
 			var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
-                                 zTree2 = $.fn.zTree.getZTreeObj("treeDemo2"),
 			nodes = zTree.getSelectedNodes();
-			if (nodes.length == 0) {
-                            nodes = zTree2.getSelectedNodes();
-                            if (nodes.length == 0) {
+			 if (nodes.length == 0) {
 				alert("Please select one node at first...");
 				return;
                             }
-			}
 			curType = "copy";
 			setCurSrcNode(nodes[0]);
 		}
 		function cut(e) {
-			var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
-                                zTree2 = $.fn.zTree.getZTreeObj("treeDemo2"),
+			var zTree = $.fn.zTree.getZTreeObj("treeDemo");
 			nodes = zTree.getSelectedNodes();
-                
-			if (nodes.length == 0) {
-                              nodes = zTree2.getSelectedNodes();
-                            if (nodes.length == 0) {
+                  if (nodes.length == 0) {
 				alert("Please select one node at first...");
 				return;
                             }
-			}
 			curType = "cut";
 			setCurSrcNode(nodes[0]);
 		}
@@ -271,18 +263,13 @@ function copy(e) {
 				alert("Please select one node to copy or cut at first...");
 				return;
 			}
+                        
 			var zTree = $.fn.zTree.getZTreeObj("treeDemo"),
                                    zTree2 = $.fn.zTree.getZTreeObj("treeDemo2");
-                        var tlevel=1;
-			var nodes = zTree.getSelectedNodes();			
-                if (nodes.length == 0) {
-                 nodes = zTree2.getSelectedNodes();
-                 tlevel=2;
-                            if (nodes.length == 0) {
-				alert("Please select one node at first...");
-				return;
-                            }
-                        }
+                     
+			var nodes = zTree.getSelectedNodes();		
+                     
+              
                var targetNode = nodes.length>0? nodes[0]:null;
                 
 			if (curSrcNode === targetNode) {
@@ -292,30 +279,25 @@ function copy(e) {
 				alert("Can't move, source node is the target node's child.");
 				return;
 			} else if (curType === "copy") {
-                            if(tlevel==1){
-				targetNode = zTree.copyNode(targetNode, curSrcNode, "inner");
-                            }else{
-                                targetNode = zTree2.copyNode(targetNode, curSrcNode, "inner");                                
-                            }
+                            targetNode = zTree.copyNode(targetNode, curSrcNode, "inner");                          
 			} else if (curType === "cut") {
-				
-                                if(tlevel==1){
-				targetNode = zTree.moveNode(targetNode, curSrcNode, "inner");
-                                }else{
-                                   targetNode = zTree2.moveNode(targetNode, curSrcNode, "inner");              
-                                }
-                            
+				targetNode = zTree.moveNode(targetNode, curSrcNode, "inner");                           
 				if (!targetNode) {
 					alert("Cutting failure, source node is the target node's parent.");
 				}
 				targetNode = curSrcNode;
 			}
-			setCurSrcNode(null,tlevel);
+			setCurSrcNode();
 			delete targetNode.isCur;
                         
-                        if(tlevel==1){
-			zTree.selectNode(targetNode);
-                    }else{
-                        zTree2.selectNode(targetNode);
-                    }
+                        zTree.selectNode(targetNode);
+                    
+		}
+
+	function onRemove(e, treeId, treeNode) {
+            console.log(JSON.stringify(treeNode));			
+		}
+                
+	function onRename(e, treeId, treeNode, isCancel) {
+            console.log(JSON.stringify(treeNode));			
 		}
